@@ -1,0 +1,405 @@
+package garagemanagementsystem;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+
+class Vehicle {
+    String ownerName;
+    String vehicleNumber;
+    String repairDetails;
+    double repairCost;
+    String serviceDetails;  
+    double serviceCost;     
+    String serviceDate;     
+    String nextServiceDate;
+
+    public Vehicle(String ownerName, String vehicleNumber) {
+        this.ownerName = ownerName;
+        this.vehicleNumber = vehicleNumber;
+        this.repairDetails = "";
+        this.repairCost = 0.0;
+        this.serviceDetails = "";  
+        this.serviceCost = 0.0;    
+        this.serviceDate = "";      
+        this.nextServiceDate = "";  
+    }
+}
+
+public class GarageManagementSystem extends JFrame {
+    private ArrayList<Vehicle> vehicles = new ArrayList<>();
+    private JTextField ownerField, vehicleNumberField, repairDetailsField, repairCostField, serviceCostField, serviceDateField;
+    private JTextArea serviceBillArea; 
+    private JTextArea repairBillArea;  
+    private JComboBox<String> vehicleListRepair; 
+    private JComboBox<String> vehicleListService; 
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+
+   
+    private JCheckBox oilChangeCheckBox;
+    private JCheckBox carWashCheckBox;
+    private JCheckBox acConditionCheckBox;
+
+    public GarageManagementSystem() {
+        setTitle("Garage Management System");
+        setSize(600, 600); 
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+
+       
+        mainPanel.add(createRegistrationPanel(), "Registration");
+        mainPanel.add(createRepairPanel(), "Repair");
+        mainPanel.add(createServicePanel(), "Service");
+
+        add(mainPanel, BorderLayout.CENTER);
+
+       
+        JPanel navigationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton registrationButton = new JButton("Registration");
+        JButton repairButton = new JButton("Repair");
+        JButton serviceButton = new JButton("Service");
+
+        registrationButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(mainPanel, "Registration");
+            }
+        });
+
+        repairButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(mainPanel, "Repair");
+                updateVehicleLists(); 
+            }
+        });
+
+        serviceButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(mainPanel, "Service");
+                updateVehicleLists(); 
+            }
+        });
+
+        navigationPanel.add(registrationButton);
+        navigationPanel.add(repairButton);
+        navigationPanel.add(serviceButton);
+
+        add(navigationPanel, BorderLayout.NORTH);
+    }
+
+    private JPanel createRegistrationPanel() {
+        JPanel registrationPanel = new JPanel(new GridBagLayout());
+        registrationPanel.setBorder(BorderFactory.createTitledBorder("Vehicle Registration"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5); 
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        registrationPanel.add(new JLabel("Owner Name:"), gbc);
+
+        gbc.gridx = 1;
+        ownerField = new JTextField(20);
+        registrationPanel.add(ownerField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        registrationPanel.add(new JLabel("Vehicle Number:"), gbc);
+
+        gbc.gridx = 1;
+        vehicleNumberField = new JTextField(20);
+        registrationPanel.add(vehicleNumberField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        registrationPanel.add(new JLabel(""), gbc); 
+
+        gbc.gridx = 1;
+        JButton registerButton = new JButton("Register Vehicle");
+        registerButton.addActionListener(new RegisterListener());
+        registrationPanel.add(registerButton, gbc);
+
+        return registrationPanel;
+    }
+
+    private JPanel createRepairPanel() {
+        JPanel repairPanel = new JPanel(new GridBagLayout());
+        repairPanel.setBorder(BorderFactory.createTitledBorder("Repair Details"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        repairPanel.add(new JLabel("Select Vehicle:"), gbc);
+
+        gbc.gridx = 1;
+        vehicleListRepair = new JComboBox<>();
+        repairPanel.add(vehicleListRepair, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        repairPanel.add(new JLabel("Repair Details:"), gbc);
+
+        gbc.gridx = 1;
+        repairDetailsField = new JTextField(20);
+        repairPanel.add(repairDetailsField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        repairPanel.add(new JLabel("Repair Cost:"), gbc);
+
+        gbc.gridx = 1;
+        repairCostField = new JTextField(20);
+        repairPanel.add(repairCostField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        JButton addRepairButton = new JButton("Add Repair");
+        addRepairButton.addActionListener(new RepairListener());
+        repairPanel.add(addRepairButton, gbc);
+
+        gbc.gridx = 1;
+        
+        JButton viewRepairBillButton = new JButton("View Repair Bill");
+        viewRepairBillButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                displayRepairBill(); 
+                JOptionPane.showMessageDialog(null, repairBillArea, "Repair Bill", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        repairPanel.add(viewRepairBillButton, gbc);
+
+        
+        repairBillArea = new JTextArea(10, 30);
+        repairBillArea.setEditable(false);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2; 
+      
+
+        return repairPanel;
+    }
+
+    
+    private JPanel createServicePanel() {
+        JPanel servicePanel = new JPanel(new GridBagLayout());
+        servicePanel.setBorder(BorderFactory.createTitledBorder("Service Details"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5); 
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        servicePanel.add(new JLabel("Select Vehicle:"), gbc);
+
+        gbc.gridx = 1;
+        vehicleListService = new JComboBox<>();
+        servicePanel.add(vehicleListService, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        servicePanel.add(new JLabel("Service Date (yyyy-MM-dd):"), gbc);
+
+        gbc.gridx = 1;
+        serviceDateField = new JTextField(20); 
+        servicePanel.add(serviceDateField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        servicePanel.add(new JLabel("Service Cost:"), gbc);
+
+        gbc.gridx = 1;
+        serviceCostField = new JTextField(20); 
+        servicePanel.add(serviceCostField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        servicePanel.add(new JLabel("Select Services:"), gbc);
+
+        
+        JPanel serviceOptionsPanel = new JPanel(new GridLayout(0, 1));
+        oilChangeCheckBox = new JCheckBox("Oil Change");
+        carWashCheckBox = new JCheckBox("Car Wash");
+        acConditionCheckBox = new JCheckBox("AC Condition");
+
+        
+        Font checkBoxFont = new Font("Arial", Font.BOLD, 16);
+        oilChangeCheckBox.setFont(checkBoxFont);
+        carWashCheckBox.setFont(checkBoxFont);
+        acConditionCheckBox.setFont(checkBoxFont);
+
+        serviceOptionsPanel.add(oilChangeCheckBox);
+        serviceOptionsPanel.add(carWashCheckBox);
+        serviceOptionsPanel.add(acConditionCheckBox);
+        gbc.gridx = 1;
+        servicePanel.add(serviceOptionsPanel, gbc); 
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        JButton addServiceButton = new JButton("Add Service");
+        addServiceButton.addActionListener(new ServiceListener());
+        servicePanel.add(addServiceButton, gbc);
+
+        gbc.gridx = 1;
+        JButton viewServiceBillButton = new JButton("View Service Bill");
+        viewServiceBillButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                displayServiceBill();
+                JOptionPane.showMessageDialog(null, serviceBillArea, "Service Bill", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        servicePanel.add(viewServiceBillButton, gbc);
+
+      
+        serviceBillArea = new JTextArea(10, 30);
+        serviceBillArea.setEditable(false);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 2;
+       
+        return servicePanel;
+    }
+
+    private void updateVehicleLists() {
+        
+        vehicleListRepair.removeAllItems();
+        vehicleListService.removeAllItems();
+        
+       
+        for (Vehicle vehicle : vehicles) {
+            vehicleListRepair.addItem(vehicle.vehicleNumber);
+            vehicleListService.addItem(vehicle.vehicleNumber);
+        }
+    }
+
+    private class RegisterListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            String ownerName = ownerField.getText();
+            String vehicleNumber = vehicleNumberField.getText();
+
+            if (!ownerName.isEmpty() && !vehicleNumber.isEmpty()) {
+                vehicles.add(new Vehicle(ownerName, vehicleNumber));
+                ownerField.setText("");
+                vehicleNumberField.setText("");
+                updateVehicleLists(); 
+                JOptionPane.showMessageDialog(null, "Vehicle Registered Successfully!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Please fill all fields.");
+            }
+        }
+    }
+
+    private class RepairListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            int selectedIndex = vehicleListRepair.getSelectedIndex();
+            if (selectedIndex != -1) {
+                Vehicle vehicle = vehicles.get(selectedIndex);
+                String repairDetails = repairDetailsField.getText();
+                double repairCost;
+
+                try {
+                    repairCost = Double.parseDouble(repairCostField.getText());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid cost. Please enter a valid number.");
+                    return;
+                }
+
+                vehicle.repairDetails = repairDetails;
+                vehicle.repairCost = repairCost;
+
+                repairDetailsField.setText("");
+                repairCostField.setText("");
+
+                JOptionPane.showMessageDialog(null, "Repair Details Added!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Please select a vehicle.");
+            }
+        }
+    }
+
+    private class ServiceListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            int selectedIndex = vehicleListService.getSelectedIndex();
+            if (selectedIndex != -1) {
+                Vehicle vehicle = vehicles.get(selectedIndex);
+                String serviceDate = serviceDateField.getText();
+                double serviceCost;
+
+                try {
+                    serviceCost = Double.parseDouble(serviceCostField.getText());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Invalid cost. Please enter a valid number.");
+                    return;
+                }
+
+                vehicle.serviceDetails = "Service on: " + serviceDate + "\n\n" +
+                         "Oil Change: " + (oilChangeCheckBox.isSelected() ? "Yes" : "No") + "\n" +
+                         "Car Wash: " + (carWashCheckBox.isSelected() ? "Yes" : "No") + "\n" +
+                         "AC Condition: " + (acConditionCheckBox.isSelected() ? "Yes" : "No");
+
+                vehicle.serviceCost = serviceCost;
+                vehicle.serviceDate = serviceDate;
+
+               
+                Calendar calendar = Calendar.getInstance();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                try {
+                    calendar.setTime(sdf.parse(serviceDate));
+                    calendar.add(Calendar.DAY_OF_MONTH, 30);
+                    vehicle.nextServiceDate = sdf.format(calendar.getTime());
+                } catch (Exception ex) {
+                    vehicle.nextServiceDate = "N/A";
+                }
+
+                serviceDateField.setText("");
+                serviceCostField.setText("");
+                oilChangeCheckBox.setSelected(false);
+                carWashCheckBox.setSelected(false);
+                acConditionCheckBox.setSelected(false);
+
+                JOptionPane.showMessageDialog(null, "Service Details Added!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Please select a vehicle.");
+            }
+        }
+    }
+
+    private void displayRepairBill() {
+        StringBuilder bill = new StringBuilder();
+        for (Vehicle vehicle : vehicles) {
+            if (!vehicle.repairDetails.isEmpty()) {
+                bill.append("Vehicle Number: ").append(vehicle.vehicleNumber)
+                        .append("\n\nRepair Details: ").append(vehicle.repairDetails)
+                        .append("\n\nRepair Cost: ₹").append(vehicle.repairCost).append("\n\n");
+            }
+        }
+        repairBillArea.setText(bill.toString());
+    }
+
+    private void displayServiceBill() {
+        StringBuilder bill = new StringBuilder();
+        for (Vehicle vehicle : vehicles) {
+            if (!vehicle.serviceDetails.isEmpty()) {
+                bill.append("Vehicle Number: ").append(vehicle.vehicleNumber)
+                        .append("\n\nService Details: ").append(vehicle.serviceDetails)
+                        .append("\n\nService Cost: ₹").append(vehicle.serviceCost)
+                        .append("\n\nService Date: ").append(vehicle.serviceDate)
+                        .append("\n\nNext Service Date: ").append(vehicle.nextServiceDate)
+                        .append("\n\n");
+            }
+        }
+        serviceBillArea.setText(bill.toString());
+    }
+
+    public static void main(String[] args) {
+        GarageManagementSystem gms = new GarageManagementSystem();
+        gms.setVisible(true);
+    }
+}
